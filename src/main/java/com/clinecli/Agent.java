@@ -7,6 +7,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jline.reader.LineReader;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -16,35 +19,108 @@ import java.util.*;
 public class Agent {
 
     private static final String MODEL = "claude-opus-4-6";
-    private static final String SYSTEM = """
-            You are Cline, an expert software engineering assistant running in the terminal.
-            You help with coding tasks, file operations, running commands, and debugging.
 
-            You have tools to read/write files, run shell commands, search code, and edit
-            files with targeted replacements.
+    // Loaded once at class init; empty string if file not found
+    private static final String POLICY_TEXT = loadPolicy();
 
-            Current working directory: %s
+    private static String buildSystem(String authorizedScope) {
+        return """
+                You are ThreatLegion, an expert security analyst and vulnerability scanner \
+                running in the terminal. Your purpose is strictly defensive: you help users \
+                identify, understand, and remediate security vulnerabilities in codebases they \
+                are authorized to assess.
 
-            Guidelines:
-            - Be concise. Briefly explain what you're about to do, then do it.
-            - Prefer edit_file for small targeted changes over rewriting entire files with write_file.
-            - If a task will take multiple steps, briefly outline them first.
-            - When you encounter errors, diagnose the root cause before trying fixes.
-            """.formatted(System.getProperty("user.dir"));
+                IDENTITY & MISSION
+                - You are a defensive security tool, not an offensive one.
+                - Every action you take must serve the goal of finding and fixing vulnerabilities.
+                - You operate only within the authorized scope confirmed at session start.
+
+                AUTHORIZED SCOPE FOR THIS SESSION
+                %s
+
+                ETHICAL CONSTRAINTS — NON-NEGOTIABLE
+                You must never, under any circumstances:
+                1. Develop working exploits or attack payloads for use against live systems
+                2. Perform network attacks, port scans, or denial-of-service testing
+                3. Extract, log, or exfiltrate credentials, API keys, or secrets found in code
+                4. Send data to external servers or endpoints
+                5. Write malware, reverse shells, backdoors, or any offensive code
+                6. Operate outside the authorized scope stated above
+                7. Install persistence mechanisms or modify system startup configuration
+                8. Attempt privilege escalation beyond what reading the codebase requires
+
+                If a request would violate any constraint above, refuse clearly and explain why.
+                If a request is ambiguous, choose the defensive interpretation and confirm.
+
+                OPERATIONAL GUIDELINES
+                - Be concise. Briefly explain what you are about to do, then do it.
+                - Prefer read_file and search_files for discovery; use write_file / edit_file \
+                  only to apply a security fix.
+                - When you find a vulnerability, report: location, severity, description, \
+                  and recommended fix.
+                - If a task spans multiple steps, outline them first.
+                - When you encounter errors, diagnose the root cause before trying fixes.
+
+                LOADED POLICY
+                %s
+
+                Current working directory: %s
+                """.formatted(
+                    authorizedScope.isBlank() ? "(no scope specified — restrict to the current directory)" : authorizedScope,
+                    POLICY_TEXT.isBlank() ? "(policy file not found)" : POLICY_TEXT,
+                    System.getProperty("user.dir"));
+    }
+
+    /** Keywords that suggest an out-of-scope or prohibited request. */
+    private static final List<String> BLOCKED_PHRASES = List.of(
+            "exploit", "payload", "reverse shell", "bind shell", "backdoor",
+            "keylogger", "ransomware", "exfiltrate", "c2 ", "command and control",
+            "denial of service", "dos attack", "ddos", "port scan all",
+            "upload to", "send to server", "post to http", "curl http", "wget http"
+    );
 
     private final AnthropicClient client;
     private final List<MessageParam> messages;
     private final LineReader lineReader;
     private final ObjectMapper json = new ObjectMapper();
+    private final String system;
 
-    public Agent(AnthropicClient client, List<MessageParam> messages, LineReader lineReader) {
+    public Agent(AnthropicClient client, List<MessageParam> messages, LineReader lineReader,
+                 String authorizedScope) {
         this.client     = client;
         this.messages   = messages;
         this.lineReader = lineReader;
+        this.system     = buildSystem(authorizedScope);
+    }
+
+    /**
+     * Pre-flight check: scans the latest user message for prohibited patterns.
+     * Returns an error string if blocked, null if the request is acceptable.
+     */
+    private String preflightCheck() {
+        if (messages.isEmpty()) return null;
+        MessageParam last = messages.getLast();
+        // Content may be a plain string or a list; convert to lowercase for matching
+        String content = last.content().toString().toLowerCase();
+        for (String phrase : BLOCKED_PHRASES) {
+            if (content.contains(phrase)) {
+                return "Request blocked by ethical policy: detected prohibited pattern \""
+                        + phrase + "\". ThreatLegion performs defensive analysis only.";
+            }
+        }
+        return null;
     }
 
     /** Run one user turn, potentially spanning multiple tool-use iterations. */
     public void runTurn() throws Exception {
+        String blocked = preflightCheck();
+        if (blocked != null) {
+            System.out.println(UI.RED + "\n  ✗ " + blocked + UI.RESET);
+            // Remove the blocked user message so history stays clean
+            if (!messages.isEmpty()) messages.removeLast();
+            return;
+        }
+
         while (true) {
             StreamResult result = streamResponse();
 
@@ -96,7 +172,7 @@ public class Agent {
         var paramsBuilder = MessageCreateParams.builder()
                 .model(MODEL)
                 .maxTokens(8096)
-                .system(SYSTEM)
+                .system(system)
                 .thinking(ThinkingConfigAdaptive.builder().build())
                 .messages(messages);
 
@@ -121,7 +197,7 @@ public class Agent {
                         acc.thinkingTexts.put(idx, new StringBuilder());
                         acc.thinkingSignatures.put(idx, "");
                         if (!acc.prefixPrinted) {
-                            System.out.print(UI.BOLD + UI.GREEN + "\nCline: " + UI.RESET);
+                            System.out.print(UI.BOLD + UI.GREEN + "\nThreatLegion:" + UI.RESET);
                             acc.prefixPrinted = true;
                         }
                         System.out.print(UI.DIM + "💭 thinking…\n" + UI.RESET);
@@ -132,10 +208,10 @@ public class Agent {
                         acc.currentType = "text";
                         acc.textContents.put(idx, new StringBuilder());
                         if (!acc.prefixPrinted) {
-                            System.out.print(UI.BOLD + UI.GREEN + "\nCline: " + UI.RESET);
+                            System.out.print(UI.BOLD + UI.GREEN + "\nThreatLegion:" + UI.RESET);
                             acc.prefixPrinted = true;
                         } else if (wasThinking) {
-                            System.out.print(UI.BOLD + UI.GREEN + "\nCline: " + UI.RESET);
+                            System.out.print(UI.BOLD + UI.GREEN + "\nThreatLegion:" + UI.RESET);
                         }
                         acc.lastWasThinking = false;
 
@@ -280,6 +356,26 @@ public class Agent {
         } catch (Exception e) {
             return Map.of();
         }
+    }
+
+    // ── Policy loading ────────────────────────────────────────────────────────
+
+    private static String loadPolicy() {
+        // Look for POLICY.md next to the jar, or in the current working directory
+        Path[] candidates = {
+            Path.of(System.getProperty("user.dir"), "POLICY.md"),
+            Path.of(System.getProperty("user.home"), ".cline", "POLICY.md")
+        };
+        for (Path p : candidates) {
+            if (Files.exists(p)) {
+                try {
+                    return Files.readString(p);
+                } catch (IOException e) {
+                    // fall through
+                }
+            }
+        }
+        return "";
     }
 
     // ── Inner types ───────────────────────────────────────────────────────────

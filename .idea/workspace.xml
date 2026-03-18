@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="" />
+    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Added readme">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Tools.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Tools.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -103,8 +108,17 @@
       <updated>1773609187657</updated>
       <workItem from="1773609188939" duration="13241000" />
       <workItem from="1773786607086" duration="28000" />
-      <workItem from="1773786648505" duration="4192000" />
+      <workItem from="1773786648505" duration="4879000" />
     </task>
+    <task id="LOCAL-00001" summary="Added readme">
+      <option name="closed" value="true" />
+      <created>1773807983169</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1773807983169</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -130,5 +144,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added readme" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added readme" />
   </component>
 </project>

@@ -40,10 +40,34 @@ public class Main {
                 .apiKey(apiKey)
                 .build();
 
-        List<MessageParam> messages = new ArrayList<>();
-        Agent agent = new Agent(client, messages, lineReader);
-
         UI.printWelcome();
+
+        // ── Scope confirmation (Layer 5) ──────────────────────────────────────
+        System.out.println(UI.YELLOW + UI.BOLD + "\n  SCOPE CONFIRMATION" + UI.RESET);
+        System.out.println(UI.DIM + "  ThreatLegion only operates on codebases you are authorized to assess.");
+        System.out.println("  Please describe the authorized scope for this session.");
+        System.out.println("  Example: /Users/alice/projects/myapp — owned by me, authorized for security review" + UI.RESET);
+        System.out.println();
+
+        String authorizedScope;
+        try {
+            authorizedScope = lineReader.readLine(UI.BOLD + "  Authorized scope: " + UI.RESET).trim();
+        } catch (org.jline.reader.UserInterruptException | org.jline.reader.EndOfFileException e) {
+            System.out.println(UI.YELLOW + "\n  Goodbye!" + UI.RESET);
+            return;
+        }
+
+        if (authorizedScope.isBlank()) {
+            System.out.println(UI.DIM + "  No scope entered — restricting to current directory." + UI.RESET);
+            authorizedScope = "Current directory: " + System.getProperty("user.dir");
+        }
+
+        System.out.println(UI.GREEN + "  ✓ Scope locked: " + authorizedScope + UI.RESET);
+        System.out.println(UI.DIM + "  All activity this session is restricted to this scope." + UI.RESET);
+        System.out.println();
+
+        List<MessageParam> messages = new ArrayList<>();
+        Agent agent = new Agent(client, messages, lineReader, authorizedScope);
 
         //noinspection InfiniteLoopStatement
         while (true) {

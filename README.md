@@ -49,6 +49,28 @@ To reset the stored key, edit or delete `~/.cline/config.json`.
 
 ---
 
+## Session Start
+
+Every session begins with two setup steps before the agent loop opens:
+
+**1. API key check** — loads from environment or config file, or prompts you to enter one.
+
+**2. Scope confirmation** — you declare which codebase or directory is authorized for this session:
+
+```
+  SCOPE CONFIRMATION
+  ThreatLegion only operates on codebases you are authorized to assess.
+  Please describe the authorized scope for this session.
+  Example: /Users/alice/projects/myapp — owned by me, authorized for security review
+
+  Authorized scope: /Users/alice/projects/myapp
+  ✓ Scope locked: /Users/alice/projects/myapp
+```
+
+The scope is injected into the system prompt and governs all agent behavior for the session. If you press Enter without entering a scope, ThreatLegion restricts itself to the current working directory.
+
+---
+
 ## Commands
 
 | Command | Description |
@@ -75,23 +97,96 @@ ThreatLegion has access to the following tools. Destructive operations require y
 
 ---
 
+## Ethical Constraint System
+
+ThreatLegion enforces a five-layer defense-in-depth ethics model to ensure it operates safely and within authorized boundaries at all times.
+
+### Layer 1 — Hardcoded System Prompt Rules
+
+The agent's system prompt includes eight non-negotiable constraints that Claude Opus 4.6 is instructed to follow regardless of user input:
+
+1. No exploit or attack payload development
+2. No network attacks, port scans, or denial-of-service testing
+3. No credential extraction or exfiltration
+4. No sending data to external servers
+5. No malware, reverse shells, or backdoors
+6. No operating outside the authorized scope
+7. No persistence mechanisms or startup modifications
+8. No privilege escalation
+
+If a request would violate any constraint, the agent refuses and explains why.
+
+### Layer 2 — Policy File (`POLICY.md`)
+
+A `POLICY.md` file in the project root defines the full ethical policy in human-readable form, covering permitted activities, prohibited activities, and guiding principles. This file is loaded at startup and injected verbatim into the system prompt so the model has explicit written policy to reference.
+
+ThreatLegion looks for the policy file in:
+1. `<working directory>/POLICY.md`
+2. `~/.cline/POLICY.md`
+
+You can customize `POLICY.md` to add organization-specific rules. If no file is found, the hardcoded system prompt rules still apply.
+
+### Layer 3 — Pre-flight Input Validation
+
+Before any user message is sent to Claude, ThreatLegion scans it for prohibited patterns. Blocked phrases include:
+
+```
+exploit, payload, reverse shell, bind shell, backdoor, keylogger,
+ransomware, exfiltrate, c2, command and control, denial of service,
+dos attack, ddos, port scan all, upload to, send to server,
+post to http, curl http, wget http
+```
+
+If a match is found, the request is rejected immediately with a clear message — Claude never sees it, and the message is removed from conversation history to keep the context clean.
+
+### Layer 4 — Tool-Level Command Guardrails
+
+The `run_command` tool maintains a hardcoded blocklist of prohibited commands that are **never allowed**, even if the user approves the action at the y/N prompt:
+
+```
+curl, wget, nc, ncat, netcat, nmap, masscan, nikto, sqlmap, hydra,
+python -c, python3 -c, bash -i, sh -i, exec /bin/,
+/dev/tcp/, /dev/udp/, mkfifo, mknod
+```
+
+These throw a `SecurityException` at the tool level, providing a hard stop independent of the model's judgment.
+
+### Layer 5 — Scope Confirmation at Session Start
+
+Before the agent loop opens, the user is required to explicitly declare the authorized scope for the session (see [Session Start](#session-start)). This scope string is:
+
+- Displayed and confirmed in the terminal
+- Injected into the system prompt for the entire session
+- Referenced by the model when deciding whether an operation is in bounds
+
+This creates a documented authorization boundary that the model actively enforces.
+
+---
+
 ## Architecture
 
 ```
 src/main/java/com/clinecli/
-├── Main.java          Entry point — JLine REPL, API key loading
-├── Agent.java         Streaming agentic loop with tool execution
-├── Tools.java         Tool definitions and implementations
+├── Main.java          Entry point — API key loading, scope confirmation, JLine REPL
+├── Agent.java         Streaming agentic loop, ethics layers 1–3, policy loading
+├── Tools.java         Tool definitions, implementations, layer 4 command guardrails
 ├── Config.java        API key persistence (~/.cline/config.json)
 └── UI.java            ANSI terminal formatting
+
+POLICY.md              Human-readable ethical policy (layer 2), loaded at runtime
 ```
 
 **Flow:**
-1. User enters a task
-2. Claude streams a response, optionally calling tools
-3. Safe tools execute automatically; destructive tools require approval
-4. Tool results are fed back to Claude
-5. Loop continues until Claude finishes
+1. API key is loaded or prompted
+2. Welcome banner is displayed
+3. User confirms the authorized scope for this session
+4. User enters a task
+5. Pre-flight check scans the request for prohibited patterns (layer 3)
+6. Claude streams a response with adaptive thinking, optionally calling tools
+7. Safe tools execute automatically; destructive tools require y/N approval
+8. Blocked commands are rejected at the tool level regardless of approval (layer 4)
+9. Tool results are fed back to Claude
+10. Loop continues until Claude finishes
 
 ---
 
@@ -110,7 +205,7 @@ java -jar build/libs/cline-cli-1.0.0.jar
 
 | Component | Library |
 |---|---|
-| AI Model | Claude Opus 4.6 (Anthropic) |
+| AI Model | Claude Opus 4.6 (Anthropic) with adaptive thinking |
 | Anthropic SDK | `com.anthropic:anthropic-java:2.15.0` |
 | Terminal input | `org.jline:jline:3.26.3` |
 | JSON | `com.fasterxml.jackson.core:jackson-databind:2.17.2` |

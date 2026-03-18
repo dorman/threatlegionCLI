@@ -20,6 +20,17 @@ public final class Tools {
             "write_file", "edit_file", "run_command", "delete_file"
     );
 
+    /** Command prefixes/tokens that are never allowed, even with user approval. */
+    private static final List<String> BLOCKED_COMMANDS = List.of(
+            "curl ", "wget ", "nc ", "ncat ", "netcat ",
+            "nmap ", "masscan ", "nikto ", "sqlmap ", "hydra ",
+            "python -c ", "python3 -c ",   // common one-liner shell spawns
+            "bash -i", "sh -i",            // interactive shells (often used for reverse shells)
+            "exec /bin/", "exec /usr/bin/sh", "exec /usr/bin/bash",
+            "/dev/tcp/", "/dev/udp/",      // bash TCP/UDP redirection
+            "mkfifo ", "mknod "            // named pipes used in reverse shells
+    );
+
     private Tools() {}
 
     public static boolean isDestructive(String name) {
@@ -204,6 +215,16 @@ public final class Tools {
         String command  = (String) input.get("command");
         String cwd      = input.containsKey("cwd") ? (String) input.get("cwd") : System.getProperty("user.dir");
         int timeoutMs   = input.containsKey("timeout_ms") ? toInt(input.get("timeout_ms")) : 30_000;
+
+        // Tool-level guardrail: block prohibited commands regardless of user approval
+        String commandLower = command.toLowerCase();
+        for (String blocked : BLOCKED_COMMANDS) {
+            if (commandLower.contains(blocked)) {
+                throw new SecurityException(
+                    "Command blocked by ethical policy: contains prohibited token \""
+                    + blocked.strip() + "\". Network tools and shell spawning are not permitted.");
+            }
+        }
 
         ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
         pb.directory(Path.of(cwd).toFile());
