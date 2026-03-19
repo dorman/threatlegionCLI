@@ -47,6 +47,70 @@ public final class Tools {
         };
     }
 
+    /** Provider-agnostic tool definitions used by all LLMProvider implementations. */
+    public static List<ToolDefinition> getToolDefinitions() {
+        return List.of(
+            new ToolDefinition("read_file",
+                "Read the contents of a file. Optionally specify a line range.",
+                Map.of(
+                    "path",       Map.of("type", "string", "description", "File path to read"),
+                    "start_line", Map.of("type", "number", "description", "Optional: first line to read (1-indexed)"),
+                    "end_line",   Map.of("type", "number", "description", "Optional: last line to read (1-indexed)")
+                ),
+                List.of("path")),
+
+            new ToolDefinition("write_file",
+                "Write content to a file, creating or overwriting it.",
+                Map.of(
+                    "path",    Map.of("type", "string", "description", "File path to write"),
+                    "content", Map.of("type", "string", "description", "Full content to write")
+                ),
+                List.of("path", "content")),
+
+            new ToolDefinition("edit_file",
+                "Make a targeted edit to a file by replacing an exact string. Prefer this over write_file for small changes.",
+                Map.of(
+                    "path",       Map.of("type", "string", "description", "File path to edit"),
+                    "old_string", Map.of("type", "string", "description", "Exact text to find and replace (must be unique)"),
+                    "new_string", Map.of("type", "string", "description", "Text to replace it with")
+                ),
+                List.of("path", "old_string", "new_string")),
+
+            new ToolDefinition("list_directory",
+                "List files and directories at a given path.",
+                Map.of(
+                    "path", Map.of("type", "string", "description", "Directory path to list")
+                ),
+                List.of("path")),
+
+            new ToolDefinition("search_files",
+                "Search for a text pattern in files using grep.",
+                Map.of(
+                    "pattern",          Map.of("type", "string",  "description", "Text or regex pattern"),
+                    "path",             Map.of("type", "string",  "description", "File or directory to search in"),
+                    "file_pattern",     Map.of("type", "string",  "description", "Optional: glob to filter files, e.g. '*.java'"),
+                    "case_insensitive", Map.of("type", "boolean", "description", "Optional: case-insensitive search")
+                ),
+                List.of("pattern", "path")),
+
+            new ToolDefinition("run_command",
+                "Execute a shell command and return its output.",
+                Map.of(
+                    "command",    Map.of("type", "string", "description", "Shell command to execute"),
+                    "cwd",        Map.of("type", "string", "description", "Optional: working directory"),
+                    "timeout_ms", Map.of("type", "number", "description", "Optional: timeout in milliseconds (default 30000)")
+                ),
+                List.of("command")),
+
+            new ToolDefinition("delete_file",
+                "Delete a file.",
+                Map.of(
+                    "path", Map.of("type", "string", "description", "Path to the file to delete")
+                ),
+                List.of("path"))
+        );
+    }
+
     /** All tool definitions sent to the API. */
     public static List<Tool> getTools() {
         return List.of(

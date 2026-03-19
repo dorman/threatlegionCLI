@@ -1,8 +1,5 @@
 package com.clinecli;
 
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.core.JsonValue;
-import com.anthropic.models.messages.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jline.reader.LineReader;
@@ -13,17 +10,20 @@ import java.nio.file.Path;
 import java.util.*;
 
 /**
- * Runs the agentic streaming loop: streams Claude's response, executes tools
- * (with approval for destructive ones), and loops until Claude stops calling tools.
+ * Orchestrates the agentic loop: calls the active LLMProvider, executes tool
+ * calls (with approval for destructive ones), feeds results back, and repeats
+ * until the model stops requesting tools.
+ *
+ * Ethics layers 1–3 live here. Layer 4 is inside Tools.runCommand().
+ * Layer 5 (scope confirmation) is enforced in Main before Agent is created.
  */
 public class Agent {
 
-    private static final String MODEL = "claude-opus-4-6";
-
-    // Loaded once at class init; empty string if file not found
+    // Loaded once at startup; empty if POLICY.md not found
     private static final String POLICY_TEXT = loadPolicy();
 
-    private static String buildSystem(String authorizedScope) {
+    /** Build the system prompt that is passed to every LLMProvider. */
+    public static String buildSystemPrompt(String authorizedScope) {
         return """
                 You are ThreatLegion, an expert security analyst and vulnerability scanner \
                 running in the terminal. Your purpose is strictly defensive: you help users \
@@ -66,12 +66,14 @@ public class Agent {
 
                 Current working directory: %s
                 """.formatted(
-                    authorizedScope.isBlank() ? "(no scope specified — restrict to the current directory)" : authorizedScope,
+                    authorizedScope.isBlank()
+                        ? "(no scope specified — restrict to the current directory)"
+                        : authorizedScope,
                     POLICY_TEXT.isBlank() ? "(policy file not found)" : POLICY_TEXT,
                     System.getProperty("user.dir"));
     }
 
-    /** Keywords that suggest an out-of-scope or prohibited request. */
+    /** Layer 3: pre-flight keyword blocklist. */
     private static final List<String> BLOCKED_PHRASES = List.of(
             "exploit", "payload", "reverse shell", "bind shell", "backdoor",
             "keylogger", "ransomware", "exfiltrate", "c2 ", "command and control",
@@ -79,65 +81,42 @@ public class Agent {
             "upload to", "send to server", "post to http", "curl http", "wget http"
     );
 
-    private final AnthropicClient client;
-    private final List<MessageParam> messages;
+    private final LLMProvider provider;
     private final LineReader lineReader;
     private final ObjectMapper json = new ObjectMapper();
-    private final String system;
 
-    public Agent(AnthropicClient client, List<MessageParam> messages, LineReader lineReader,
-                 String authorizedScope) {
-        this.client     = client;
-        this.messages   = messages;
+    public Agent(LLMProvider provider, LineReader lineReader) {
+        this.provider   = provider;
         this.lineReader = lineReader;
-        this.system     = buildSystem(authorizedScope);
     }
+
+    public void clearHistory()  { provider.clearHistory(); }
+    public int  historySize()   { return provider.historySize(); }
 
     /**
-     * Pre-flight check: scans the latest user message for prohibited patterns.
-     * Returns an error string if blocked, null if the request is acceptable.
+     * Run one user turn. Adds the user message to the provider's history,
+     * runs the agentic loop, and handles all tool execution.
      */
-    private String preflightCheck() {
-        if (messages.isEmpty()) return null;
-        MessageParam last = messages.getLast();
-        // Content may be a plain string or a list; convert to lowercase for matching
-        String content = last.content().toString().toLowerCase();
-        for (String phrase : BLOCKED_PHRASES) {
-            if (content.contains(phrase)) {
-                return "Request blocked by ethical policy: detected prohibited pattern \""
-                        + phrase + "\". ThreatLegion performs defensive analysis only.";
-            }
-        }
-        return null;
-    }
-
-    /** Run one user turn, potentially spanning multiple tool-use iterations. */
-    public void runTurn() throws Exception {
-        String blocked = preflightCheck();
+    public void runTurn(String userText) throws Exception {
+        // Layer 3: pre-flight check before anything hits the model
+        String blocked = preflightCheck(userText);
         if (blocked != null) {
             System.out.println(UI.RED + "\n  ✗ " + blocked + UI.RESET);
-            // Remove the blocked user message so history stays clean
-            if (!messages.isEmpty()) messages.removeLast();
             return;
         }
 
+        provider.addUserMessage(userText);
+
         while (true) {
-            StreamResult result = streamResponse();
+            StreamResult result = provider.stream(Tools.getToolDefinitions());
 
-            // Rebuild the assistant message from accumulated streaming data and store in history
-            List<ContentBlockParam> assistantBlocks = buildAssistantBlocks(result);
-            messages.add(MessageParam.builder()
-                    .role(MessageParam.Role.ASSISTANT)
-                    .contentOfBlockParams(assistantBlocks)
-                    .build());
-
-            if (!StopReason.TOOL_USE.equals(result.stopReason)) {
+            if (!result.isToolUse) {
                 System.out.println();
                 break;
             }
 
             // Execute each tool call and collect results
-            List<ContentBlockParam> toolResults = new ArrayList<>();
+            List<ToolResult> toolResults = new ArrayList<>();
             for (ToolCall tc : result.toolCalls) {
                 Map<String, Object> input = parseJson(tc.inputJson);
                 UI.printToolStart(tc.name, input);
@@ -151,182 +130,24 @@ public class Agent {
                     resultText = runTool(tc.name, input);
                 }
 
-                toolResults.add(ContentBlockParam.ofToolResult(
-                        ToolResultBlockParam.builder()
-                                .toolUseId(tc.id)
-                                .content(resultText)
-                                .build()));
+                toolResults.add(new ToolResult(tc.id, resultText));
             }
 
-            // Feed all tool results back as a user turn and loop
-            messages.add(MessageParam.builder()
-                    .role(MessageParam.Role.USER)
-                    .contentOfBlockParams(toolResults)
-                    .build());
+            provider.addToolResults(toolResults);
         }
     }
 
-    // ── Streaming ─────────────────────────────────────────────────────────────
+    // ── Ethics layer 3: pre-flight ────────────────────────────────────────────
 
-    private StreamResult streamResponse() {
-        var paramsBuilder = MessageCreateParams.builder()
-                .model(MODEL)
-                .maxTokens(8096)
-                .system(system)
-                .thinking(ThinkingConfigAdaptive.builder().build())
-                .messages(messages);
-
-        // addTool() one at a time (no addAllTools overload for List<Tool>)
-        for (Tool tool : Tools.getTools()) {
-            paramsBuilder.addTool(tool);
-        }
-
-        StreamResult acc = new StreamResult();
-
-        try (var stream = client.messages().createStreaming(paramsBuilder.build())) {
-            stream.stream().forEach(event -> {
-
-                // ── Block start ──────────────────────────────────────────────
-                event.contentBlockStart().ifPresent(cbs -> {
-                    int idx = (int) cbs.index();
-                    acc.currentIndex = idx;
-                    var block = cbs.contentBlock();
-
-                    if (block.isThinking()) {
-                        acc.currentType = "thinking";
-                        acc.thinkingTexts.put(idx, new StringBuilder());
-                        acc.thinkingSignatures.put(idx, "");
-                        if (!acc.prefixPrinted) {
-                            System.out.print(UI.BOLD + UI.GREEN + "\nThreatLegion:" + UI.RESET);
-                            acc.prefixPrinted = true;
-                        }
-                        System.out.print(UI.DIM + "💭 thinking…\n" + UI.RESET);
-                        acc.lastWasThinking = true;
-
-                    } else if (block.isText()) {
-                        boolean wasThinking = acc.lastWasThinking;
-                        acc.currentType = "text";
-                        acc.textContents.put(idx, new StringBuilder());
-                        if (!acc.prefixPrinted) {
-                            System.out.print(UI.BOLD + UI.GREEN + "\nThreatLegion:" + UI.RESET);
-                            acc.prefixPrinted = true;
-                        } else if (wasThinking) {
-                            System.out.print(UI.BOLD + UI.GREEN + "\nThreatLegion:" + UI.RESET);
-                        }
-                        acc.lastWasThinking = false;
-
-                    } else if (block.isToolUse()) {
-                        acc.currentType = "tool_use";
-                        // .toolUse() returns Optional<ToolUseBlock>
-                        block.toolUse().ifPresent(tu -> {
-                            acc.toolCalls.add(new ToolCall(idx, tu.id(), tu.name()));
-                            acc.toolInputBuilders.put(idx, new StringBuilder());
-                        });
-                        acc.lastWasThinking = false;
-                    }
-                });
-
-                // ── Block delta ──────────────────────────────────────────────
-                event.contentBlockDelta().ifPresent(cbd -> {
-                    var delta = cbd.delta();
-
-                    // .text() → Optional<TextDelta>, TextDelta.text() is the string
-                    delta.text().ifPresent(td -> {
-                        System.out.print(td.text());
-                        System.out.flush();
-                        acc.textContents
-                           .computeIfAbsent(acc.currentIndex, k -> new StringBuilder())
-                           .append(td.text());
-                    });
-
-                    // .thinking() → Optional<ThinkingDelta>, ThinkingDelta.thinking() is the string
-                    delta.thinking().ifPresent(td ->
-                        acc.thinkingTexts
-                           .computeIfAbsent(acc.currentIndex, k -> new StringBuilder())
-                           .append(td.thinking())
-                    );
-
-                    // .signature() → Optional<SignatureDelta>, SignatureDelta.signature() is the string
-                    delta.signature().ifPresent(sd ->
-                        acc.thinkingSignatures.put(acc.currentIndex, sd.signature())
-                    );
-
-                    // .inputJson() → Optional<InputJsonDelta>, InputJsonDelta.partialJson()
-                    delta.inputJson().ifPresent(ij ->
-                        acc.toolInputBuilders
-                           .computeIfAbsent(acc.currentIndex, k -> new StringBuilder())
-                           .append(ij.partialJson())
-                    );
-                });
-
-                // ── Block stop ───────────────────────────────────────────────
-                event.contentBlockStop().ifPresent(cbs -> {
-                    if ("tool_use".equals(acc.currentType)) {
-                        StringBuilder sb = acc.toolInputBuilders.get(acc.currentIndex);
-                        acc.toolCalls.stream()
-                           .filter(tc -> tc.index == acc.currentIndex)
-                           .findFirst()
-                           .ifPresent(tc -> tc.inputJson = sb != null ? sb.toString() : "{}");
-                    }
-                });
-
-                // ── Message delta (stop reason) ───────────────────────────────
-                event.messageDelta().ifPresent(md ->
-                    // stopReason() returns Optional<StopReason>
-                    md.delta().stopReason().ifPresent(sr -> acc.stopReason = sr)
-                );
-            });
-        }
-
-        return acc;
-    }
-
-    // ── History reconstruction ────────────────────────────────────────────────
-
-    private List<ContentBlockParam> buildAssistantBlocks(StreamResult acc) {
-        List<ContentBlockParam> blocks = new ArrayList<>();
-
-        // Collect all block indices in sorted order to preserve ordering
-        Set<Integer> allIndices = new TreeSet<>();
-        allIndices.addAll(acc.thinkingTexts.keySet());
-        allIndices.addAll(acc.textContents.keySet());
-        acc.toolCalls.forEach(tc -> allIndices.add(tc.index));
-
-        for (int idx : allIndices) {
-            if (acc.thinkingTexts.containsKey(idx)) {
-                blocks.add(ContentBlockParam.ofThinking(
-                        ThinkingBlockParam.builder()
-                                .thinking(acc.thinkingTexts.get(idx).toString())
-                                .signature(acc.thinkingSignatures.getOrDefault(idx, ""))
-                                .build()));
-
-            } else if (acc.textContents.containsKey(idx)) {
-                blocks.add(ContentBlockParam.ofText(
-                        TextBlockParam.builder()
-                                .text(acc.textContents.get(idx).toString())
-                                .build()));
-
-            } else {
-                acc.toolCalls.stream()
-                   .filter(tc -> tc.index == idx)
-                   .findFirst()
-                   .ifPresent(tc -> {
-                       // Build ToolUseBlockParam.Input from the parsed JSON map
-                       Map<String, Object> inputMap = parseJson(tc.inputJson);
-                       var inputBuilder = ToolUseBlockParam.Input.builder();
-                       for (Map.Entry<String, Object> e : inputMap.entrySet()) {
-                           inputBuilder.putAdditionalProperty(e.getKey(), JsonValue.from(e.getValue()));
-                       }
-                       blocks.add(ContentBlockParam.ofToolUse(
-                               ToolUseBlockParam.builder()
-                                       .id(tc.id)
-                                       .name(tc.name)
-                                       .input(inputBuilder.build())
-                                       .build()));
-                   });
+    private String preflightCheck(String userText) {
+        String lower = userText.toLowerCase();
+        for (String phrase : BLOCKED_PHRASES) {
+            if (lower.contains(phrase)) {
+                return "Request blocked by ethical policy: detected prohibited pattern \""
+                        + phrase.strip() + "\". ThreatLegion performs defensive analysis only.";
             }
         }
-        return blocks;
+        return null;
     }
 
     // ── Tool execution ────────────────────────────────────────────────────────
@@ -361,7 +182,6 @@ public class Agent {
     // ── Policy loading ────────────────────────────────────────────────────────
 
     private static String loadPolicy() {
-        // Look for POLICY.md next to the jar, or in the current working directory
         Path[] candidates = {
             Path.of(System.getProperty("user.dir"), "POLICY.md"),
             Path.of(System.getProperty("user.home"), ".cline", "POLICY.md")
@@ -370,45 +190,9 @@ public class Agent {
             if (Files.exists(p)) {
                 try {
                     return Files.readString(p);
-                } catch (IOException e) {
-                    // fall through
-                }
+                } catch (IOException ignored) {}
             }
         }
         return "";
-    }
-
-    // ── Inner types ───────────────────────────────────────────────────────────
-
-    /** Mutable accumulator for one streaming response. */
-    private static class StreamResult {
-        StopReason stopReason = null; // null means end_turn / not set yet
-
-        // Display state
-        boolean prefixPrinted = false;
-        boolean lastWasThinking = false;
-        int currentIndex = -1;
-        String currentType = "";
-
-        // Accumulated blocks (keyed by block index)
-        final Map<Integer, StringBuilder> thinkingTexts     = new LinkedHashMap<>();
-        final Map<Integer, String>        thinkingSignatures = new LinkedHashMap<>();
-        final Map<Integer, StringBuilder> textContents       = new LinkedHashMap<>();
-        final Map<Integer, StringBuilder> toolInputBuilders  = new LinkedHashMap<>();
-        final List<ToolCall>              toolCalls          = new ArrayList<>();
-    }
-
-    /** A tool call extracted from the stream. */
-    private static class ToolCall {
-        final int index;
-        final String id;
-        final String name;
-        String inputJson = "{}";
-
-        ToolCall(int index, String id, String name) {
-            this.index = index;
-            this.id    = id;
-            this.name  = name;
-        }
     }
 }

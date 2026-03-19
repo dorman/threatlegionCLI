@@ -14,6 +14,7 @@ dependencies {
     implementation("com.anthropic:anthropic-java:2.15.0")
     implementation("org.jline:jline:3.26.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
 
 application {

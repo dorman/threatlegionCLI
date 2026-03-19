@@ -4,10 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Added readme">
+    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes.">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Agent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Config.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Config.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/LLMProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/LLMProvider.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/StreamResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/StreamResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/ToolDefinition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/ToolDefinition.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Tools.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Tools.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -16,7 +23,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="23" />
+    <option name="cachedIndexableFilesCount" value="27" />
   </component>
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
@@ -33,22 +40,25 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "dorman"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;dorman&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/dorman/threatlegionCLI.git",
-    "accountId": "072dde82-42a1-4461-8d9c-7b8ccbeeb2ef"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/dorman/threatlegionCLI.git&quot;,
+    &quot;accountId&quot;: &quot;072dde82-42a1-4461-8d9c-7b8ccbeeb2ef&quot;
   }
-}]]></component>
+}</component>
   <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="$USER_HOME$/.gradle/wrapper/dists/gradle-9.0.0-bin/d6wjpkvcgsg3oed0qlfss3wgl/gradle-9.0.0" javaHome="/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home" gradleVersion="9.0.0" />
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
@@ -63,6 +73,8 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "main",
@@ -108,7 +120,8 @@
       <updated>1773609187657</updated>
       <workItem from="1773609188939" duration="13241000" />
       <workItem from="1773786607086" duration="28000" />
-      <workItem from="1773786648505" duration="4879000" />
+      <workItem from="1773786648505" duration="5243000" />
+      <workItem from="1773869366761" duration="5770000" />
     </task>
     <task id="LOCAL-00001" summary="Added readme">
       <option name="closed" value="true" />
@@ -118,7 +131,23 @@
       <option name="project" value="LOCAL" />
       <updated>1773807983169</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes.">
+      <option name="closed" value="true" />
+      <created>1773811330211</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1773811330211</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes.">
+      <option name="closed" value="true" />
+      <created>1773811420524</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1773811420524</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -128,10 +157,16 @@
     <option name="OPEN_GENERIC_TABS">
       <map>
         <entry key="d75fe8d9-8155-468b-83ee-0ebf41cc78a3" value="TOOL_WINDOW" />
+        <entry key="4d190c88-5c63-4b75-bae4-786dc92e8d50" value="TOOL_WINDOW" />
       </map>
     </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="4d190c88-5c63-4b75-bae4-786dc92e8d50">
+          <value>
+            <State />
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -147,6 +182,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added readme" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added readme" />
+    <MESSAGE value="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes." />
+    <option name="LAST_COMMIT_MESSAGE" value="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes." />
   </component>
 </project>

@@ -49,13 +49,39 @@ To reset the stored key, edit or delete `~/.cline/config.json`.
 
 ---
 
+## Supported Providers
+
+ThreatLegion works with Anthropic, OpenAI, OpenRouter, and any OpenAI-compatible API endpoint.
+
+| # | Provider | Notes |
+|---|---|---|
+| 1 | **Anthropic (Claude)** | Default. Uses the official Anthropic Java SDK. |
+| 2 | **OpenAI** | GPT-4o, o1, etc. via `https://api.openai.com/v1` |
+| 3 | **OpenRouter** | Access 200+ models with one API key via `https://openrouter.ai/api/v1` |
+| 4 | **Custom** | Any OpenAI-compatible endpoint (Ollama, Together, Groq, local LLMs, etc.) |
+
+On startup you choose a provider, enter the model name, and provide your API key. Keys are saved per-provider to `~/.cline/config.json` so you're only asked once per provider. The last-used provider is remembered and selected by default next time.
+
+**Environment variable overrides** (checked before the config file):
+
+| Provider | Environment variable |
+|---|---|
+| Anthropic | `ANTHROPIC_API_KEY` |
+| OpenAI | `OPENAI_API_KEY` |
+| OpenRouter | `OPENROUTER_API_KEY` |
+| Custom | `CUSTOM_API_KEY` |
+
+---
+
 ## Session Start
 
-Every session begins with two setup steps before the agent loop opens:
+Every session follows four setup steps before the agent loop opens:
 
-**1. API key check** — loads from environment or config file, or prompts you to enter one.
+**1. Provider selection** — choose your LLM backend and model.
 
-**2. Scope confirmation** — you declare which codebase or directory is authorized for this session:
+**2. API key check** — loads from environment or config file, or prompts you to enter one.
+
+**3. Scope confirmation** — you declare which codebase or directory is authorized for this session:
 
 ```
   SCOPE CONFIRMATION
@@ -167,13 +193,21 @@ This creates a documented authorization boundary that the model actively enforce
 
 ```
 src/main/java/com/clinecli/
-├── Main.java          Entry point — API key loading, scope confirmation, JLine REPL
-├── Agent.java         Streaming agentic loop, ethics layers 1–3, policy loading
-├── Tools.java         Tool definitions, implementations, layer 4 command guardrails
-├── Config.java        API key persistence (~/.cline/config.json)
-└── UI.java            ANSI terminal formatting
+├── Main.java                    Entry point — provider selection, scope confirmation, JLine REPL
+├── Agent.java                   Agentic loop orchestrator, ethics layers 1–3, policy loading
+├── LLMProvider.java             Stateful provider interface (stream, addUserMessage, addToolResults…)
+├── AnthropicProvider.java       Anthropic SDK streaming implementation (thinking-block aware)
+├── OpenAICompatibleProvider.java  OkHttp SSE implementation for OpenAI / OpenRouter / custom
+├── Tools.java                   Tool definitions, implementations, layer 4 command guardrails
+├── Config.java                  Per-provider API key + model persistence (~/.cline/config.json)
+├── StreamResult.java            Result returned by LLMProvider.stream()
+├── ToolDefinition.java          Provider-agnostic tool schema
+├── ToolCall.java                Tool call (id, name, inputJson)
+├── ToolResult.java              Tool execution result (toolUseId, content)
+├── GenericMessage.java          (reserved for future use)
+└── UI.java                      ANSI terminal formatting
 
-POLICY.md              Human-readable ethical policy (layer 2), loaded at runtime
+POLICY.md                        Human-readable ethical policy (layer 2), loaded at runtime
 ```
 
 **Flow:**
@@ -205,8 +239,8 @@ java -jar build/libs/cline-cli-1.0.0.jar
 
 | Component | Library |
 |---|---|
-| AI Model | Claude Opus 4.6 (Anthropic) with adaptive thinking |
-| Anthropic SDK | `com.anthropic:anthropic-java:2.15.0` |
+| Anthropic provider | `com.anthropic:anthropic-java:2.15.0` (with adaptive thinking) |
+| OpenAI-compatible providers | `com.squareup.okhttp3:okhttp:4.12.0` (SSE streaming) |
 | Terminal input | `org.jline:jline:3.26.3` |
 | JSON | `com.fasterxml.jackson.core:jackson-databind:2.17.2` |
 | Build | Gradle with Kotlin DSL |
