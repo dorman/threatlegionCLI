@@ -4,18 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes.">
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Agent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Agent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Config.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Config.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/LLMProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/LLMProvider.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/StreamResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/StreamResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/ToolDefinition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/ToolDefinition.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Tools.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Tools.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,7 +14,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="27" />
+    <option name="cachedIndexableFilesCount" value="32" />
   </component>
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
@@ -68,41 +59,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/ericdorman/Documents/ClineCLI-Java",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/ericdorman/Documents/ClineCLI-Java&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager">
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="ClineCLI-Java" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="ClineCLI-Java" />
-      <option name="filePath" />
-      <method v="2" />
-    </configuration>
-  </component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -122,6 +100,8 @@
       <workItem from="1773786607086" duration="28000" />
       <workItem from="1773786648505" duration="5243000" />
       <workItem from="1773869366761" duration="5770000" />
+      <workItem from="1773896996940" duration="3211000" />
+      <workItem from="1773963044393" duration="3794000" />
     </task>
     <task id="LOCAL-00001" summary="Added readme">
       <option name="closed" value="true" />
@@ -147,7 +127,23 @@
       <option name="project" value="LOCAL" />
       <updated>1773811420524</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console">
+      <option name="closed" value="true" />
+      <created>1773897130885</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1773897130885</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console">
+      <option name="closed" value="true" />
+      <created>1773897150796</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1773897150796</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -183,6 +179,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added readme" />
     <MESSAGE value="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes." />
+    <MESSAGE value="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console" />
   </component>
 </project>

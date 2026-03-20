@@ -9,6 +9,8 @@ import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
+import java.util.List;
+
 public class Main {
 
     /** Holds everything needed to construct an LLMProvider once scope is known. */
@@ -93,26 +95,21 @@ public class Main {
     private static ProviderSetup chooseProvider(LineReader lr) throws Exception {
         String lastProvider = Config.loadLastProvider();
 
-        System.out.println(UI.BOLD + "\n  Select a provider:" + UI.RESET);
+        // Default highlight to last-used provider
+        int defaultIndex = 0;
         for (int i = 0; i < BUILT_IN_PROVIDERS.length; i++) {
-            boolean isLast = BUILT_IN_PROVIDERS[i][1].equals(lastProvider);
-            System.out.println(UI.DIM + "  [" + (i + 1) + "] " + BUILT_IN_PROVIDERS[i][0]
-                    + (isLast ? UI.GREEN + "  ←" + UI.RESET + UI.DIM : "") + UI.RESET);
+            if (BUILT_IN_PROVIDERS[i][1].equals(lastProvider)) { defaultIndex = i; break; }
         }
 
-        // Default to last-used provider index, or 1
-        String defaultChoice = "1";
-        for (int i = 0; i < BUILT_IN_PROVIDERS.length; i++) {
-            if (BUILT_IN_PROVIDERS[i][1].equals(lastProvider)) {
-                defaultChoice = String.valueOf(i + 1);
-                break;
-            }
-        }
+        List<String> labels = java.util.Arrays.stream(BUILT_IN_PROVIDERS)
+                .map(p -> p[0])
+                .toList();
 
-        String raw = prompt(lr, "\n  Choice [" + defaultChoice + "]: ", defaultChoice);
-        int choice;
-        try { choice = Integer.parseInt(raw) - 1; } catch (NumberFormatException e) { choice = 0; }
-        if (choice < 0 || choice >= BUILT_IN_PROVIDERS.length) choice = 0;
+        int choice = InteractiveMenu.select(lr.getTerminal(), "Select a provider:", labels, defaultIndex);
+        if (choice < 0) {
+            System.out.println(UI.YELLOW + "\n  Goodbye!" + UI.RESET);
+            return null;
+        }
 
         String[] p       = BUILT_IN_PROVIDERS[choice];
         String pKey      = p[1];
