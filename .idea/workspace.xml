@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console">
+    <list default="true" id="c4ddb15b-7cc3-4e72-8f62-2cea6e8bd324" name="Changes" comment="Resolved and fixed the bug with not being able to select individual model providers in the provider list. Resolved by modifing terminal.reader() and terminal.input()">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/clinecli/Main.java" afterDir="false" />
     </list>
@@ -101,7 +101,9 @@
       <workItem from="1773786648505" duration="5243000" />
       <workItem from="1773869366761" duration="5770000" />
       <workItem from="1773896996940" duration="3211000" />
-      <workItem from="1773963044393" duration="3794000" />
+      <workItem from="1773963044393" duration="6564000" />
+      <workItem from="1774060307912" duration="124000" />
+      <workItem from="1774060467633" duration="1121000" />
     </task>
     <task id="LOCAL-00001" summary="Added readme">
       <option name="closed" value="true" />
@@ -143,7 +145,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773897150796</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Resolved and fixed the bug with not being able to select individual model providers in the provider list. Resolved by modifing terminal.reader() and terminal.input()">
+      <option name="closed" value="true" />
+      <created>1773984051591</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1773984051591</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -180,6 +190,7 @@
     <MESSAGE value="Added readme" />
     <MESSAGE value="Added All 5 ethical constraint layers. Updated ReadMe to reflect these changes." />
     <MESSAGE value="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added additional model providers to startup flow for users to choose from and disabled Gradle's rich console" />
+    <MESSAGE value="Resolved and fixed the bug with not being able to select individual model providers in the provider list. Resolved by modifing terminal.reader() and terminal.input()" />
+    <option name="LAST_COMMIT_MESSAGE" value="Resolved and fixed the bug with not being able to select individual model providers in the provider list. Resolved by modifing terminal.reader() and terminal.input()" />
   </component>
 </project>

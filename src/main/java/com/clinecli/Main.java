@@ -89,6 +89,7 @@ public class Main {
         { "Anthropic (Claude)", "anthropic",  "",                                 "claude-opus-4-6"           },
         { "OpenAI",             "openai",     "https://api.openai.com/v1",        "gpt-4o"                    },
         { "OpenRouter",         "openrouter", "https://openrouter.ai/api/v1",     "anthropic/claude-opus-4-6" },
+        { "MiniMax",            "minimax",    "https://api.minimax.chat/v1",      "MiniMax-Text-01"           },
         { "Custom (any OpenAI-compatible endpoint)", "custom", "", ""             },
     };
 
